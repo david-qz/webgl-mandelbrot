@@ -55,7 +55,7 @@ class Mandelbrot {
         this.canvas = canvas;
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
             this.onResize();
         });
 
@@ -67,7 +67,7 @@ class Mandelbrot {
 
         this.shaderProgram = initShaderProgram(this.gl, Mandelbrot.vss, Mandelbrot.fss);
 
-        this.vao_ext = gl.getExtension('OES_vertex_array_object');
+        this.vao_ext = gl.getExtension("OES_vertex_array_object");
 
         this.#uploadData();
         this.#initVAO();

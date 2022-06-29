@@ -18,6 +18,7 @@
     "supabase": false
   },
   "rules": {
+    "quotes": ["error", "double"],
     "eqeqeq": ["error", "always"],
     "no-console": "warn",
     "indent": [

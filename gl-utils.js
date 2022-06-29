@@ -4,7 +4,7 @@ function loadShader(gl, type, source) {
     gl.compileShader(shaderId);
 
     if (!gl.getShaderParameter(shaderId, gl.COMPILE_STATUS)) {
-        alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shaderId));
+        alert("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shaderId));
         gl.deleteShader(shaderId);
         return null;
     }
@@ -22,7 +22,7 @@ export function initShaderProgram(gl, vss, fss) {
     gl.linkProgram(programId);
 
     if (!gl.getProgramParameter(programId, gl.LINK_STATUS)) {
-        alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(programId));
+        alert("Unable to initialize the shader program: " + gl.getProgramInfoLog(programId));
         return null;
     }
 
