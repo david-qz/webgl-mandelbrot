@@ -1,109 +1,130 @@
-import {
-    Matrix2,
-    Vector2,
-    Complex,
-    AffineTransformation
-} from './Math.js';
-
-const debouncedCallback = (debounceTime, callback) => {
-    const timeout = null;
-    return () => {
-        clearTimeout(timeout);
-        setTimeout(callback, debounceTime);
-    };
-};
+import { initShaderProgram } from "/gl-utils.js";
 
 class Mandelbrot {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.#onResize();
+    static vss = `
+        attribute vec4 a_position;
+        attribute vec2 a_complex_position;
 
-        window.addEventListener('resize', debouncedCallback(1000, () => {
-            const size = `${this.canvas.clientWidth}:${this.canvas.clientHeight}`;
+        varying vec2 v_complex_position;
 
-            if (this.lastSize && size === this.lastSize) {
-                return;
+        void main() {
+            gl_Position = a_position;
+            v_complex_position = a_complex_position;
+        }
+    `;
+
+    static fss = `
+        precision mediump float;
+
+        varying vec2 v_complex_position;
+
+        #define MAX_ITERATIONS  100
+
+        vec2 squareComplex(vec2 c) {
+            return vec2(c.x*c.x - c.y*c.y, 2.0*c.x*c.y);
+        }
+
+        float iterate(vec2 c) {
+            vec2 z = vec2(0, 0);
+            for(int i=0; i < MAX_ITERATIONS; ++i) {
+                z = squareComplex(z) + c;
+                if (length(z) > 2.0) {
+                    return float(i)/float(MAX_ITERATIONS);
+                }
             }
 
-            this.lastSize = `${this.canvas.clientWidth}:${this.canvas.clientHeight}`;
-            this.#onResize();
-        }));
-    }
+            return 1.0;
+        }
 
-    #onResize() {
-        this.canvas.width = this.canvas.clientWidth;
-        this.canvas.height = this.canvas.clientHeight;
-        this.#calculateTransform();
+        void main() {
+            vec2 c = v_complex_position;
+            float escape_time = iterate(c);
+
+            gl_FragColor = vec4(vec3(escape_time), 1.0);
+        }
+    `;
+
+    constructor(canvas) {
+        this.canvas = canvas;
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        window.addEventListener('resize', () => {
+            this.onResize();
+        });
+
+        const gl = canvas.getContext("webgl");
+        this.gl = gl;
+        if (this.gl === null) {
+            alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+        }
+
+        this.shaderProgram = initShaderProgram(this.gl, Mandelbrot.vss, Mandelbrot.fss);
+        this.vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        const positions = [
+            -1.0, -1.0, -2.0, -1.25,
+            -1.0, 1.0, -2.0, 1.25,
+            1.0, -1.0, 0.75, -1.25,
+            1.0, 1.0, 0.75, 1.25,
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
         this.render();
     }
 
-    #calculateTransform() {
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-        const xScale = 1 / w * 2;
-        const yScale = 1 / h * 2;
-
-        this.transformation = new AffineTransformation(
-            new Matrix2(
-                xScale, 0,
-                0, -yScale
-            ),
-            new Vector2(
-                -1.5,
-                1
-            )
+    #setupVertexAttribs() {
+        const gl = this.gl;
+        const posAttribLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
+        gl.vertexAttribPointer(
+            posAttribLocation,
+            2,
+            gl.FLOAT,
+            false,
+            16,
+            0
         );
+        gl.enableVertexAttribArray(posAttribLocation);
+
+        const complexAttribLocation = gl.getAttribLocation(this.shaderProgram, "a_complex_position");
+        gl.vertexAttribPointer(
+            complexAttribLocation,
+            2,
+            gl.FLOAT,
+            false,
+            16,
+            8
+        );
+        gl.enableVertexAttribArray(complexAttribLocation);
     }
 
-    inSet(c, iterations) {
-        let z = new Complex(0, 0);
-        for (let i = 0; i < iterations; i++) {
-            z = z.mul(z).add(c);
-
-            if (z.magSquared() > 4) {
-                return [false, z.mag()];
-            }
+    onResize() {
+        const canvas = this.canvas;
+        if (canvas.width === canvas.clientWidth && canvas.height === canvas.clientHeight) {
+            return;
         }
-        return [true, z.mag()];
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        this.gl.viewport(0, 0, canvas.width, canvas.height);
+        this.render();
     }
-
 
     render() {
-        const ctx = this.canvas.getContext('2d');
+        const gl = this.gl;
 
-        const w = ctx.canvas.width;
-        const h = ctx.canvas.height;
-        const imageData = ctx.createImageData(w, h);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        this.#setupVertexAttribs();
 
-        // Iterate through every pixel
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            const x = (i / 4) % w;
-            const y = Math.floor((i / 4) / w);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearDepth(1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
 
-            // Transform canvas coords to complex plane
-            let v = new Vector2(x, y);
-            v = this.transformation.transform(v);
-            const c = new Complex(v.x, v.y);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            // Do iteration
-            const [inSet, mag] = this.inSet(c, 150);
-
-            // Modify pixel data
-            if (inSet) {
-                imageData.data[i + 0] = 0;
-                imageData.data[i + 1] = 0;
-                imageData.data[i + 2] = 0;
-                imageData.data[i + 3] = 255;
-            } else {
-                imageData.data[i + 0] = mag * 40;
-                imageData.data[i + 1] = mag * 40;
-                imageData.data[i + 2] = 255;
-                imageData.data[i + 3] = 255;
-            }
-        }
-
-        ctx.putImageData(imageData, 0, 0);
+        gl.useProgram(this.shaderProgram);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 }
 
-new Mandelbrot(document.querySelector('#mandelbrot'));
+new Mandelbrot(document.querySelector("#mandelbrot"));
