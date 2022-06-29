@@ -1,49 +1,6 @@
-import { initShaderProgram } from "/gl-utils.js";
+import { initShaderProgram, mandelbrotProgram } from "/shaders.js";
 
 class Mandelbrot {
-    static vss = `
-        attribute vec4 a_position;
-        attribute vec2 a_complex_position;
-
-        varying vec2 v_complex_position;
-
-        void main() {
-            gl_Position = a_position;
-            v_complex_position = a_complex_position;
-        }
-    `;
-
-    static fss = `
-        precision mediump float;
-
-        varying vec2 v_complex_position;
-
-        #define MAX_ITERATIONS  200
-
-        vec2 squareComplex(vec2 c) {
-            return vec2(c.x*c.x - c.y*c.y, 2.0*c.x*c.y);
-        }
-
-        float iterate(vec2 c) {
-            vec2 z = vec2(0, 0);
-            for(int i=0; i < MAX_ITERATIONS; ++i) {
-                z = squareComplex(z) + c;
-                if (length(z) > 2.0) {
-                    return float(i)/float(MAX_ITERATIONS);
-                }
-            }
-
-            return 1.0;
-        }
-
-        void main() {
-            vec2 c = v_complex_position;
-            float escape_time = iterate(c);
-
-            gl_FragColor = vec4(vec3( 2.71828 - exp(1.0 - escape_time) ), 1.0);
-        }
-    `;
-
     canvas;
     gl;
     shaderProgram;
@@ -65,7 +22,7 @@ class Mandelbrot {
             alert("Unable to initialize WebGL. Your browser or machine may not support it.");
         }
 
-        this.shaderProgram = initShaderProgram(this.gl, Mandelbrot.vss, Mandelbrot.fss);
+        this.shaderProgram = initShaderProgram(this.gl, mandelbrotProgram);
 
         this.vao_ext = gl.getExtension("OES_vertex_array_object");
 
@@ -111,27 +68,17 @@ class Mandelbrot {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject, gl.STATIC_DRAW);
 
         // Store vertex attribute configuration in VAO
-        const posAttribLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
-        gl.vertexAttribPointer(
-            posAttribLocation,
-            2,
-            gl.FLOAT,
-            false,
-            16,
-            0
-        );
-        gl.enableVertexAttribArray(posAttribLocation);
-
-        const complexAttribLocation = gl.getAttribLocation(this.shaderProgram, "a_complex_position");
-        gl.vertexAttribPointer(
-            complexAttribLocation,
-            2,
-            gl.FLOAT,
-            false,
-            16,
-            8
-        );
-        gl.enableVertexAttribArray(complexAttribLocation);
+        for (const attr of Object.values(this.shaderProgram.attributes)) {
+            gl.vertexAttribPointer(
+                attr.location,
+                attr.number,
+                gl.FLOAT,
+                attr.normalize,
+                attr.stride,
+                attr.offset
+            );
+            gl.enableVertexAttribArray(attr.location);
+        }
 
         this.vao_ext.bindVertexArrayOES(null);
     }
@@ -148,7 +95,7 @@ class Mandelbrot {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.useProgram(this.shaderProgram);
+        gl.useProgram(this.shaderProgram.id);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
         this.vao_ext.bindVertexArrayOES(null);
