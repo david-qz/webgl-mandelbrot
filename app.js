@@ -18,7 +18,7 @@ class Mandelbrot {
 
         varying vec2 v_complex_position;
 
-        #define MAX_ITERATIONS  100
+        #define MAX_ITERATIONS  200
 
         vec2 squareComplex(vec2 c) {
             return vec2(c.x*c.x - c.y*c.y, 2.0*c.x*c.y);
@@ -40,9 +40,16 @@ class Mandelbrot {
             vec2 c = v_complex_position;
             float escape_time = iterate(c);
 
-            gl_FragColor = vec4(vec3(escape_time), 1.0);
+            gl_FragColor = vec4(vec3( 2.71828 - exp(1.0 - escape_time) ), 1.0);
         }
     `;
+
+    canvas;
+    gl;
+    shaderProgram;
+    vertexBufferObject;
+    vao_ext;
+    vao;
 
     constructor(canvas) {
         this.canvas = canvas;
@@ -59,8 +66,30 @@ class Mandelbrot {
         }
 
         this.shaderProgram = initShaderProgram(this.gl, Mandelbrot.vss, Mandelbrot.fss);
-        this.vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+
+        this.vao_ext = gl.getExtension('OES_vertex_array_object');
+
+        this.#uploadData();
+        this.#initVAO();
+        this.render();
+    }
+
+    onResize() {
+        const canvas = this.canvas;
+        if (canvas.width === canvas.clientWidth && canvas.height === canvas.clientHeight) {
+            return;
+        }
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        this.gl.viewport(0, 0, canvas.width, canvas.height);
+        this.render();
+    }
+
+    #uploadData() {
+        const gl = this.gl;
+
+        this.vertexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject);
         const positions = [
             -1.0, -1.0, -2.0, -1.25,
             -1.0, 1.0, -2.0, 1.25,
@@ -69,12 +98,19 @@ class Mandelbrot {
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-        this.render();
     }
 
-    #setupVertexAttribs() {
+    #initVAO() {
+        if (this.vao) return;
         const gl = this.gl;
+
+        this.vao = this.vao_ext.createVertexArrayOES();
+        this.vao_ext.bindVertexArrayOES(this.vao);
+
+        // Bind array buffer to VAO
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject, gl.STATIC_DRAW);
+
+        // Store vertex attribute configuration in VAO
         const posAttribLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
         gl.vertexAttribPointer(
             posAttribLocation,
@@ -96,24 +132,14 @@ class Mandelbrot {
             8
         );
         gl.enableVertexAttribArray(complexAttribLocation);
-    }
 
-    onResize() {
-        const canvas = this.canvas;
-        if (canvas.width === canvas.clientWidth && canvas.height === canvas.clientHeight) {
-            return;
-        }
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        this.gl.viewport(0, 0, canvas.width, canvas.height);
-        this.render();
+        this.vao_ext.bindVertexArrayOES(null);
     }
 
     render() {
         const gl = this.gl;
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        this.#setupVertexAttribs();
+        this.vao_ext.bindVertexArrayOES(this.vao);
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
@@ -124,6 +150,8 @@ class Mandelbrot {
 
         gl.useProgram(this.shaderProgram);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        this.vao_ext.bindVertexArrayOES(null);
     }
 }
 
