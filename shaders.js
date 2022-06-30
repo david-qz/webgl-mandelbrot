@@ -28,10 +28,14 @@ export function initShaderProgram(gl, shaderProgram) {
 
     shaderProgram.id = programId;
 
-    const attributes = shaderProgram.attributes;
-    for (const attribute of Object.keys(attributes)) {
-        const location = gl.getAttribLocation(programId, attribute);
-        attributes[attribute].location = location;
+    for (const attribute of shaderProgram.attributes) {
+        const location = gl.getAttribLocation(programId, attribute.name);
+        attribute.location = location;
+    }
+
+    for (const uniform of shaderProgram.uniforms) {
+        const location = gl.getUniformLocation(programId, uniform.name);
+        uniform.location = location;
     }
 
     return shaderProgram;
@@ -39,14 +43,14 @@ export function initShaderProgram(gl, shaderProgram) {
 
 export const mandelbrotProgram = {
     vss: `
-        attribute vec4 a_position;
-        attribute vec2 a_complex_position;
-
+        attribute vec2 a_position;
+        uniform mat3 model_mat;
+        uniform mat3 view_mat;
         varying vec2 v_complex_position;
 
         void main() {
-            gl_Position = a_position;
-            v_complex_position = a_complex_position;
+            v_complex_position = vec2(model_mat * vec3(a_position, 1));
+            gl_Position = vec4(view_mat * model_mat * vec3(a_position, 1), 1);
         }
     `,
 
@@ -82,22 +86,25 @@ export const mandelbrotProgram = {
     `,
 
     id: null,
-    attributes: {
-        "a_position": {
+    attributes: [
+        {
+            name: "a_position",
             location: null,
             number: 2,
             type: "float",
             normalize: false,
-            stride: 16,
+            stride: 8,
             offset: 0
-        },
-        "a_complex_position": {
-            location: null,
-            number: 2,
-            type: "float",
-            normalize: false,
-            stride: 16,
-            offset: 8
         }
-    }
+    ],
+    uniforms: [
+        {
+            name: "model_mat",
+            location: null,
+        },
+        {
+            name: "view_mat",
+            location: null,
+        }
+    ],
 };

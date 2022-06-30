@@ -1,12 +1,14 @@
 import { initShaderProgram, mandelbrotProgram } from "/shaders.js";
+import { ViewRect } from "/Math.js";
 
 class Mandelbrot {
     canvas;
-    gl;
-    shaderProgram;
-    vertexBufferObject;
-    vao_ext;
-    vao;
+    #gl;
+    #shaderProgram;
+    #vertexBufferObject;
+    #vao_ext;
+    #vao;
+    #viewRect;
 
     constructor(canvas) {
         this.canvas = canvas;
@@ -17,16 +19,16 @@ class Mandelbrot {
         });
 
         const gl = canvas.getContext("webgl");
-        this.gl = gl;
-        if (this.gl === null) {
+        if (gl === null) {
             alert("Unable to initialize WebGL. Your browser or machine may not support it.");
         }
 
-        this.shaderProgram = initShaderProgram(this.gl, mandelbrotProgram);
+        this.#gl = gl;
+        this.#shaderProgram = initShaderProgram(this.#gl, mandelbrotProgram);
+        this.#vao_ext = gl.getExtension("OES_vertex_array_object");
+        this.#viewRect = new ViewRect(-2.0, -1.25, 2.75, 2.5);
 
-        this.vao_ext = gl.getExtension("OES_vertex_array_object");
-
-        this.#uploadData();
+        this.#uploadVertices();
         this.#initVAO();
         this.render();
     }
@@ -38,37 +40,37 @@ class Mandelbrot {
         }
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
-        this.gl.viewport(0, 0, canvas.width, canvas.height);
+        this.#gl.viewport(0, 0, canvas.width, canvas.height);
         this.render();
     }
 
-    #uploadData() {
-        const gl = this.gl;
+    #uploadVertices() {
+        const gl = this.#gl;
 
-        this.vertexBufferObject = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject);
+        this.#vertexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertexBufferObject);
         const positions = [
-            -1.0, -1.0, -2.0, -1.25,
-            -1.0, 1.0, -2.0, 1.25,
-            1.0, -1.0, 0.75, -1.25,
-            1.0, 1.0, 0.75, 1.25,
+            -1.0, -1.0,
+            -1.0, 1.0,
+            1.0, -1.0,
+            1.0, 1.0,
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
     #initVAO() {
-        if (this.vao) return;
-        const gl = this.gl;
+        if (this.#vao) return;
+        const gl = this.#gl;
 
-        this.vao = this.vao_ext.createVertexArrayOES();
-        this.vao_ext.bindVertexArrayOES(this.vao);
+        this.#vao = this.#vao_ext.createVertexArrayOES();
+        this.#vao_ext.bindVertexArrayOES(this.#vao);
 
         // Bind array buffer to VAO
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertexBufferObject);
 
         // Store vertex attribute configuration in VAO
-        for (const attr of Object.values(this.shaderProgram.attributes)) {
+        for (const attr of this.#shaderProgram.attributes) {
             gl.vertexAttribPointer(
                 attr.location,
                 attr.number,
@@ -80,13 +82,13 @@ class Mandelbrot {
             gl.enableVertexAttribArray(attr.location);
         }
 
-        this.vao_ext.bindVertexArrayOES(null);
+        this.#vao_ext.bindVertexArrayOES(null);
     }
 
     render() {
-        const gl = this.gl;
+        const gl = this.#gl;
 
-        this.vao_ext.bindVertexArrayOES(this.vao);
+        this.#vao_ext.bindVertexArrayOES(this.#vao);
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
@@ -95,10 +97,22 @@ class Mandelbrot {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.useProgram(this.shaderProgram.id);
+        gl.useProgram(this.#shaderProgram.id);
+
+        for (const uniform of this.#shaderProgram.uniforms) {
+            switch (uniform.name) {
+                case "model_mat":
+                    gl.uniformMatrix3fv(uniform.location, false, this.#viewRect.inverseViewMatrix);
+                    break;
+                case "view_mat":
+                    gl.uniformMatrix3fv(uniform.location, false, this.#viewRect.viewMatrix);
+                    break;
+            }
+        }
+
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-        this.vao_ext.bindVertexArrayOES(null);
+        this.#vao_ext.bindVertexArrayOES(null);
     }
 }
 

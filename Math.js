@@ -86,3 +86,34 @@ export class AffineTransformation {
         return newVector;
     }
 }
+
+export class ViewRect {
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    get viewMatrix() {
+        const { x, y, width: w, height: h } = this;
+        /* eslint-disable */
+        return [
+            2/w,      0,        0,
+            0,        2/h,      0,
+            -2*x/w-1, -2*y/h-1, 1
+        ];
+        /* eslint-enable */
+    }
+
+    get inverseViewMatrix() {
+        const { x, y, width: w, height: h } = this;
+        /* eslint-disable */
+        return [
+            w/2,   0,     0,
+            0,     h/2,   0,
+            w/2+x, h/2+y, 1
+        ];
+        /* eslint-enable */
+    }
+}
