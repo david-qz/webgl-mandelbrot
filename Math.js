@@ -121,4 +121,15 @@ export class Rect {
             this.height * factor
         );
     }
+
+    aspectRatio() {
+        return this.width / this.height;
+    }
+
+    equals(rect) {
+        return this.x === rect.x &&
+               this.y === rect.y &&
+               this.width === rect.width &&
+               this.height === rect.height;
+    }
 }

@@ -103,25 +103,24 @@ class MandelbrotRenderer {
 
 export class Mandelbrot {
     #renderer;
-    #canvasRect;
 
     constructor(canvas) {
         this.#renderer = new MandelbrotRenderer(canvas);
         this.canvas = canvas;
 
         this.#setupEventListeners();
-        this.handleResize();
+        this.#handleResize();
         this.#renderer.render();
     }
 
     #setupEventListeners() {
         window.addEventListener("resize", () => {
-            this.handleResize();
+            this.#handleResize();
             this.#renderer.render();
         });
 
         this.canvas.addEventListener("wheel", e => {
-            this.handleScroll({
+            this.#handleScroll({
                 x: e.offsetX,
                 y: e.offsetY,
                 amount: e.deltaY
@@ -129,17 +128,28 @@ export class Mandelbrot {
         });
     }
 
-    handleResize() {
-        const c = this.canvas;
-
-        if (c.width !== c.clientWidth || c.height !== c.clientHeight) {
-            c.width = c.clientWidth;
-            c.height = c.clientHeight;
-            this.#renderer.setGlViewport(0, 0, c.width, c.height);
-        }
+    get #clientRect() {
+        return new Rect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
     }
 
-    handleScroll({ x, y, amount }) {
+    get #canvasRect() {
+        return new Rect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    set #canvasRect(rect) {
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+    }
+
+    #handleResize() {
+        const clientRect = this.#clientRect;
+        if (this.#canvasRect.equals(clientRect)) return;
+
+        this.#canvasRect = clientRect;
+        this.#renderer.setGlViewport(0, 0, clientRect.width, clientRect.height);
+    }
+
+    #handleScroll({ x, y, amount }) {
         const viewRect = this.#renderer.viewRect;
 
         const a = x * (viewRect.width / this.canvas.clientWidth) + viewRect.x;
