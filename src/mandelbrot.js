@@ -1,4 +1,4 @@
-import { initShaderProgram, mandelbrotShaderSources } from "./gl/shaders.js";
+import shaders, { initShaderProgram } from "./gl/shaders.js";
 import { Rect } from "./utils/math.js";
 
 class MandelbrotRenderer {
@@ -17,7 +17,7 @@ class MandelbrotRenderer {
             alert("Unable to initialize WebGL2. Your browser or machine may not support it.");
         }
 
-        this.#programInfo = initShaderProgram(this.#gl, mandelbrotShaderSources);
+        this.#programInfo = initShaderProgram(this.#gl, shaders.mandelbrot);
         this.#program = this.#programInfo.program;
 
         this.#ndcRect = new Rect(-1.0, -1.0, 2.0, 2.0);

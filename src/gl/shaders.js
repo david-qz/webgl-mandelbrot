@@ -1,22 +1,13 @@
-function loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        const error = gl.getShaderInfoLog(shader);
-        const shaderTypeString = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
-        logAndAlertError(`Failed to compile ${shaderTypeString} shader: " + ${error}`);
-        gl.deleteShader(shader);
-        return null;
+export default {
+    mandelbrot: {
+        vsSource: await fetchShader("./shaders/mandelbrot.vs"),
+        fsSource: await fetchShader("./shaders/mandelbrot.fs")
     }
+};
 
-    return shader;
-}
-
-export function initShaderProgram(gl, { vs, fs }) {
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vs);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fs);
+export function initShaderProgram(gl, { vsSource, fsSource }) {
+    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
     if (vertexShader === null || fragmentShader === null) return;
 
@@ -59,16 +50,27 @@ export function initShaderProgram(gl, { vs, fs }) {
     return programInfo;
 }
 
+function loadShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const error = gl.getShaderInfoLog(shader);
+        const shaderTypeString = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
+        logAndAlertError(`Failed to compile ${shaderTypeString} shader: " + ${error}`);
+        gl.deleteShader(shader);
+        return null;
+    }
+
+    return shader;
+}
+
 async function fetchShader(path) {
     const response = await fetch(path);
     // TODO: add some error checking
     return response.text();
 }
-
-export const  mandelbrotShaderSources = {
-    vs: await fetchShader("./shaders/mandelbrot.vs"),
-    fs: await fetchShader("./shaders/mandelbrot.fs")
-};
 
 function logAndAlertError(error) {
     // eslint-disable-next-line no-console
