@@ -1,5 +1,5 @@
 import { initShaderProgram, mandelbrotProgram } from "/shaders.js";
-import { ViewRect } from "/Math.js";
+import { Rect } from "/Math.js";
 
 class Mandelbrot {
     canvas;
@@ -8,6 +8,7 @@ class Mandelbrot {
     #vertexBufferObject;
     #vao_ext;
     #vao;
+    #ndcRect;
     #viewRect;
 
     constructor(canvas) {
@@ -26,7 +27,9 @@ class Mandelbrot {
         this.#gl = gl;
         this.#shaderProgram = initShaderProgram(this.#gl, mandelbrotProgram);
         this.#vao_ext = gl.getExtension("OES_vertex_array_object");
-        this.#viewRect = new ViewRect(-2.0, -1.25, 2.75, 2.5);
+
+        this.#ndcRect = new Rect(-1.0, -1.0, 2.0, 2.0);
+        this.#viewRect = new Rect(-2.0, -1.25, 2.75, 2.5);
 
         this.#uploadVertices();
         this.#initVAO();
@@ -85,6 +88,10 @@ class Mandelbrot {
         this.#vao_ext.bindVertexArrayOES(null);
     }
 
+    #viewTransform() {
+        return this.#ndcRect.transformTo(this.#viewRect);
+    }
+
     render() {
         const gl = this.#gl;
 
@@ -101,11 +108,8 @@ class Mandelbrot {
 
         for (const uniform of this.#shaderProgram.uniforms) {
             switch (uniform.name) {
-                case "model_mat":
-                    gl.uniformMatrix3fv(uniform.location, false, this.#viewRect.inverseViewMatrix);
-                    break;
                 case "view_mat":
-                    gl.uniformMatrix3fv(uniform.location, false, this.#viewRect.viewMatrix);
+                    gl.uniformMatrix3fv(uniform.location, false, this.#viewTransform());
                     break;
             }
         }

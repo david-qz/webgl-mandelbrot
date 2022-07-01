@@ -74,20 +74,7 @@ export class Complex {
     }
 }
 
-export class AffineTransformation {
-    constructor(matrix2, translation) {
-        this.matrix = matrix2;
-        this.translation = translation;
-    }
-
-    transform(vector) {
-        let newVector = this.matrix.mulVector(vector);
-        newVector = newVector.add(this.translation);
-        return newVector;
-    }
-}
-
-export class ViewRect {
+export class Rect {
     constructor(x, y, width, height) {
         this.x = x;
         this.y = y;
@@ -95,24 +82,17 @@ export class ViewRect {
         this.height = height;
     }
 
-    get viewMatrix() {
-        const { x, y, width: w, height: h } = this;
-        /* eslint-disable */
-        return [
-            2/w,      0,        0,
-            0,        2/h,      0,
-            -2*x/w-1, -2*y/h-1, 1
-        ];
-        /* eslint-enable */
-    }
+    // returns a column-major 3x3 matrix representing an affine transformation
+    // that, when applied to this rect, will transform it to the target rect.
+    transformTo(rect) {
+        const { x: x1, y: y1, width: w1, height: h1 } = this;
+        const { x: x2, y: y2, width: w2, height: h2 } = rect;
 
-    get inverseViewMatrix() {
-        const { x, y, width: w, height: h } = this;
         /* eslint-disable */
         return [
-            w/2,   0,     0,
-            0,     h/2,   0,
-            w/2+x, h/2+y, 1
+            w2/w1,         0,             0,
+            0,             h2/h1,         0,
+            x2 - w2*x1/w1, y2 - h2*y1/h1, 1
         ];
         /* eslint-enable */
     }

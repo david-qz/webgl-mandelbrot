@@ -44,13 +44,12 @@ export function initShaderProgram(gl, shaderProgram) {
 export const mandelbrotProgram = {
     vss: `
         attribute vec2 a_position;
-        uniform mat3 model_mat;
         uniform mat3 view_mat;
         varying vec2 v_complex_position;
 
         void main() {
-            v_complex_position = vec2(model_mat * vec3(a_position, 1));
-            gl_Position = vec4(view_mat * model_mat * vec3(a_position, 1), 1);
+            v_complex_position = vec2(view_mat * vec3(a_position, 1));
+            gl_Position = vec4(a_position, 1, 1);
         }
     `,
 
@@ -98,10 +97,6 @@ export const mandelbrotProgram = {
         }
     ],
     uniforms: [
-        {
-            name: "model_mat",
-            location: null,
-        },
         {
             name: "view_mat",
             location: null,
