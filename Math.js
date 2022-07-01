@@ -101,4 +101,24 @@ export class Rect {
             (x2 - w2 * x1 / w1), (y2 - h2 * y1 / h1), 1
         ];
     }
+
+    /**
+     * Scales the rectangle about point and returns a new Rect. If you x, y are provided, will
+     * scale about the rectangle's center.
+     * @param {Number} factor - the scale factor
+     * @param {Number} x - x coordinate to scale about
+     * @param {Number} y - y coordinate to scale about
+     * @returns {Rect} A new Rect
+     */
+    scale(factor, x, y) {
+        x = x ?? this.x + this.width / 2;
+        y = y ?? this.y + this.height / 2;
+
+        return new Rect(
+            (this.x - x) * factor + x,
+            (this.y - y) * factor + y,
+            this.width * factor,
+            this.height * factor
+        );
+    }
 }
