@@ -62,6 +62,6 @@ async function fetchShader(path) {
 }
 
 export const  mandelbrotShaderSources = {
-    vs: await fetchShader("shaders/mandelbrot.vs"),
-    fs: await fetchShader("shaders/mandelbrot.fs")
+    vs: await fetchShader("./shaders/mandelbrot.vs"),
+    fs: await fetchShader("./shaders/mandelbrot.fs")
 };
