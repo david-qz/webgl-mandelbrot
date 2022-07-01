@@ -91,7 +91,7 @@ class MandelbrotRenderer {
 
     set viewRect(rect) {
         this.#viewRect = new Rect(rect.x, rect.y, rect.width, rect.height);
-        this.#viewMatrix = this.#ndcRect.transformTo(rect);
+        this.#viewMatrix = Rect.transformation(this.#ndcRect, rect);
         this.#updateViewMatrixUniform();
     }
 

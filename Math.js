@@ -74,6 +74,9 @@ export class Complex {
     }
 }
 
+/**
+ * Represents a rectangle with one corner at (x,y). Which corner (x,y) represents is arbitrary.
+*/
 export class Rect {
     constructor(x, y, width, height) {
         this.x = x;
@@ -82,11 +85,15 @@ export class Rect {
         this.height = height;
     }
 
-    // returns a column-major 3x3 matrix representing an affine transformation
-    // that, when applied to this rect, will transform it to the target rect.
-    transformTo(rect) {
-        const { x: x1, y: y1, width: w1, height: h1 } = this;
-        const { x: x2, y: y2, width: w2, height: h2 } = rect;
+    /**
+     * Returns an affine transformation that transforms each point within rect1 to the corresponding
+     * point in rect2.
+     * @param {Rect} rect
+     * @returns {Array} A column-major 3x3 matrix
+     */
+    static transformation(rect1, rect2) {
+        const { x: x1, y: y1, width: w1, height: h1 } = rect1;
+        const { x: x2, y: y2, width: w2, height: h2 } = rect2;
 
         return [
             (w2 / w1),           0,                   0,
