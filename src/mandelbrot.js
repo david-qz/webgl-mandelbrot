@@ -1,5 +1,5 @@
-import { initShaderProgram, mandelbrotShaderSources } from "./shaders.js";
-import { Rect } from "./Math.js";
+import { initShaderProgram, mandelbrotShaderSources } from "./gl/shaders.js";
+import { Rect } from "./utils/math.js";
 
 class MandelbrotRenderer {
     #gl;
