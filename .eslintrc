@@ -29,12 +29,6 @@
         "ignoreComments": true
       }
     ],
-    "no-multi-spaces": [
-      "error",
-      {
-        "ignoreEOLComments": true
-      }
-    ],
     "new-cap": ["error", { "capIsNew": false }],
     "no-redeclare": [
       "error",
