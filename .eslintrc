@@ -25,6 +25,7 @@
       "error",
       4,
       {
+        "ArrayExpression": "off",
         "SwitchCase": 1,
         "ignoreComments": true
       }

@@ -4,57 +4,42 @@ import { Rect } from "/Math.js";
 class MandelbrotRenderer {
     #gl;
     #shaderProgram;
-    #vertexBufferObject;
-    #vao_ext;
     #vao;
     #ndcRect;
     #viewRect;
     #viewMatrix;
 
-    constructor(gl) {
-        if (gl === null) {
-            alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+    constructor(canvas) {
+        this.#gl = canvas.getContext("webgl2");
+
+        if (!this.#gl) {
+            alert("Unable to initialize WebGL2. Your browser or machine may not support it.");
         }
 
-        this.#gl = gl;
         this.#shaderProgram = initShaderProgram(this.#gl, mandelbrotProgram);
-        this.#vao_ext = gl.getExtension("OES_vertex_array_object");
 
         this.#ndcRect = new Rect(-1.0, -1.0, 2.0, 2.0);
         this.viewRect = new Rect(-2.0, -1.25, 2.75, 2.5);
 
-        this.#uploadVertices();
-        this.#initVAO();
-        this.#updateViewMatrixUniform();
+        this.#init();
     }
 
-    #uploadVertices() {
+    #init() {
         const gl = this.#gl;
 
-        this.#vertexBufferObject = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertexBufferObject);
-        const positions = [
-            -1.0, -1.0,
-            -1.0, 1.0,
-            1.0, -1.0,
-            1.0, 1.0,
-        ];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    }
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
 
-    #initVAO() {
-        if (this.#vao) return;
+        // Upload vertex data
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,
+            -1,  1,
+             1, -1,
+             1,  1
+        ]), gl.STATIC_DRAW);
 
-        const gl = this.#gl;
-
-        this.#vao = this.#vao_ext.createVertexArrayOES();
-        this.#vao_ext.bindVertexArrayOES(this.#vao);
-
-        // Bind array buffer to VAO
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertexBufferObject);
-
-        // Store vertex attribute configuration in VAO
+        // Set up vertex attributes
         for (const attr of this.#shaderProgram.attributes) {
             gl.vertexAttribPointer(
                 attr.location,
@@ -67,7 +52,8 @@ class MandelbrotRenderer {
             gl.enableVertexAttribArray(attr.location);
         }
 
-        this.#vao_ext.bindVertexArrayOES(null);
+        gl.bindVertexArray(null);
+        this.#vao = vao;
     }
 
     #updateViewMatrixUniform() {
@@ -90,13 +76,13 @@ class MandelbrotRenderer {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.#vao_ext.bindVertexArrayOES(this.#vao);
+        gl.bindVertexArray(this.#vao);
         gl.useProgram(this.#shaderProgram.id);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
         gl.useProgram(null);
-        this.#vao_ext.bindVertexArrayOES(null);
+        gl.bindVertexArray(null);
     }
 
     setGlViewport(x, y, width, height) {
@@ -117,7 +103,7 @@ class MandelbrotRenderer {
 
 export class Mandelbrot {
     constructor(canvas) {
-        this.renderer = new MandelbrotRenderer(canvas.getContext("webgl"));
+        this.renderer = new MandelbrotRenderer(canvas);
         this.canvas = canvas;
 
         this.#setupEventListeners();
