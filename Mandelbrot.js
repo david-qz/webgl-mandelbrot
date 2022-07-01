@@ -1,9 +1,10 @@
-import { initShaderProgram, mandelbrotProgram } from "/shaders.js";
+import { initShaderProgram, mandelbrotShaderSources } from "/shaders.js";
 import { Rect } from "/Math.js";
 
 class MandelbrotRenderer {
     #gl;
-    #shaderProgram;
+    #programInfo;
+    #program;
     #vao;
     #ndcRect;
     #viewRect;
@@ -16,7 +17,8 @@ class MandelbrotRenderer {
             alert("Unable to initialize WebGL2. Your browser or machine may not support it.");
         }
 
-        this.#shaderProgram = initShaderProgram(this.#gl, mandelbrotProgram);
+        this.#programInfo = initShaderProgram(this.#gl, mandelbrotShaderSources);
+        this.#program = this.#programInfo.program;
 
         this.#ndcRect = new Rect(-1.0, -1.0, 2.0, 2.0);
         this.viewRect = new Rect(-2.0, -1.25, 2.75, 2.5);
@@ -39,18 +41,17 @@ class MandelbrotRenderer {
              1,  1
         ]), gl.STATIC_DRAW);
 
-        // Set up vertex attributes
-        for (const attr of this.#shaderProgram.attributes) {
-            gl.vertexAttribPointer(
-                attr.location,
-                attr.number,
-                gl.FLOAT,
-                attr.normalize,
-                attr.stride,
-                attr.offset
-            );
-            gl.enableVertexAttribArray(attr.location);
-        }
+        // Set up vertex attribute
+        const location = this.#programInfo.attributes["a_position"].location;
+        gl.vertexAttribPointer(
+            location,
+            2,
+            gl.FLOAT,
+            false,
+            8,
+            0
+        );
+        gl.enableVertexAttribArray(location);
 
         gl.bindVertexArray(null);
         this.#vao = vao;
@@ -58,10 +59,9 @@ class MandelbrotRenderer {
 
     #updateViewMatrixUniform() {
         const gl = this.#gl;
-        const program = this.#shaderProgram;
 
-        gl.useProgram(program.id);
-        const location = program.uniforms.find(x => x.name === "view_mat").location;
+        gl.useProgram(this.#program);
+        const location = this.#programInfo.uniforms["view_mat"].location;
         gl.uniformMatrix3fv(location, false, this.#viewMatrix);
         gl.useProgram(null);
     }
@@ -77,7 +77,7 @@ class MandelbrotRenderer {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         gl.bindVertexArray(this.#vao);
-        gl.useProgram(this.#shaderProgram.id);
+        gl.useProgram(this.#program);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
