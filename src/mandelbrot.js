@@ -1,4 +1,5 @@
 import shaders, { initShaderProgram } from "./gl/shaders.js";
+import palettes from "./palettes.js";
 import { Rect } from "./utils/math.js";
 
 class MandelbrotRenderer {
@@ -6,6 +7,7 @@ class MandelbrotRenderer {
     #programInfo;
     #program;
     #vao;
+    #texture;
     #ndcRect;
     #viewRect;
     #viewMatrix;
@@ -55,15 +57,37 @@ class MandelbrotRenderer {
 
         gl.bindVertexArray(null);
         this.#vao = vao;
+
+        // Upload palette texture
+        const texture = gl.createTexture();
+        this.#texture = texture;
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        const palette = palettes.wikipedia;
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB,
+            palette.length / 3, 1, 0, gl.RGB, gl.UNSIGNED_BYTE,
+            palette);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
 
-    #updateViewMatrixUniform() {
+    #updateUniforms() {
         const gl = this.#gl;
 
+        // View matrix uniform
         gl.useProgram(this.#program);
-        const location = this.#programInfo.uniforms["view_mat"].location;
-        gl.uniformMatrix3fv(location, false, this.#viewMatrix);
-        gl.useProgram(null);
+        const viewMatLoc = this.#programInfo.uniforms["view_mat"].location;
+        gl.uniformMatrix3fv(viewMatLoc, false, this.#viewMatrix);
+
+        // Texture sampler uniform
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.#texture);
+        const paletteSamplerLoc = this.#programInfo.uniforms["u_palette_sampler"].location;
+        gl.uniform1i(paletteSamplerLoc, 0);
+
+        gl.useProgram(this.#program);
     }
 
     render() {
@@ -92,7 +116,7 @@ class MandelbrotRenderer {
     set viewRect(rect) {
         this.#viewRect = new Rect(rect.x, rect.y, rect.width, rect.height);
         this.#viewMatrix = Rect.transformation(this.#ndcRect, rect);
-        this.#updateViewMatrixUniform();
+        this.#updateUniforms();
     }
 
     get viewRect() {
