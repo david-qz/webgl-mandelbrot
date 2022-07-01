@@ -42,7 +42,7 @@ class MandelbrotRenderer {
         ]), gl.STATIC_DRAW);
 
         // Set up vertex attribute
-        const location = this.#programInfo.attributes["a_position"].location;
+        const location = this.#programInfo.attributes["a_normalized_position"].location;
         gl.vertexAttribPointer(
             location,
             2,
