@@ -1,12 +1,10 @@
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-  precision highp float;
-#else
-  precision mediump float;
-#endif
+#version 300 es
+
+precision highp float;
 
 uniform sampler2D u_palette_sampler;
-
-varying vec2 v_complex_position;
+in vec2 v_complex_position;
+out vec4 fragment_color;
 
 vec2 squareComplex(vec2 c) {
     return vec2(c.x*c.x - c.y*c.y, 2.0*c.x*c.y);
@@ -31,8 +29,8 @@ void main() {
 
     if (escape_time != 1.0) {
         float u = escape_time * 10.0;
-        gl_FragColor = texture2D(u_palette_sampler, vec2(mod(u, 1.0), 0.5));
+        fragment_color = texture(u_palette_sampler, vec2(mod(u, 1.0), 0.5));
     } else {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        fragment_color = vec4(0.0, 0.0, 0.0, 1.0);
     }
 }
