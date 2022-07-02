@@ -61,6 +61,7 @@ class MandelbrotRenderer {
         // Upload palette texture
         const texture = gl.createTexture();
         this.#texture = texture;
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
 
         const palette = palettes.wikipedia;
@@ -71,23 +72,27 @@ class MandelbrotRenderer {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        this.#updateTextureUniform();
     }
 
-    #updateUniforms() {
+    #updateViewMatUniform() {
         const gl = this.#gl;
 
         // View matrix uniform
         gl.useProgram(this.#program);
         const viewMatLoc = this.#programInfo.uniforms["view_mat"].location;
         gl.uniformMatrix3fv(viewMatLoc, false, this.#viewMatrix);
+        gl.useProgram(null);
+    }
 
-        // Texture sampler uniform
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.#texture);
-        const paletteSamplerLoc = this.#programInfo.uniforms["u_palette_sampler"].location;
-        gl.uniform1i(paletteSamplerLoc, 0);
+    #updateTextureUniform() {
+        const gl = this.#gl;
 
         gl.useProgram(this.#program);
+        const paletteSamplerLoc = this.#programInfo.uniforms["u_palette_sampler"].location;
+        gl.uniform1i(paletteSamplerLoc, 0);
+        gl.useProgram(null);
     }
 
     render() {
@@ -116,7 +121,7 @@ class MandelbrotRenderer {
     set viewRect(rect) {
         this.#viewRect = new Rect(rect.x, rect.y, rect.width, rect.height);
         this.#viewMatrix = Rect.transformation(this.#ndcRect, rect);
-        this.#updateUniforms();
+        this.#updateViewMatUniform();
     }
 
     get viewRect() {
