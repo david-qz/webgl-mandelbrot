@@ -2,8 +2,9 @@
 
 precision highp float;
 
+uniform mat3 view_mat;
 uniform sampler2D u_palette_sampler;
-in vec2 v_complex_position;
+in vec2 v_normalized_position;
 out vec4 fragment_color;
 
 vec2 squareComplex(vec2 c) {
@@ -24,7 +25,7 @@ float iterate(vec2 c) {
 }
 
 void main() {
-    vec2 c = v_complex_position;
+    vec2 c = vec2(view_mat * vec3(v_normalized_position, 1));
     float escape_time = iterate(c);
 
     if (escape_time != 1.0) {
