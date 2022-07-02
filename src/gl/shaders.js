@@ -1,7 +1,7 @@
 export default {
     mandelbrot: {
         vsSource: await fetchShader("./shaders/mandelbrot.vs"),
-        fsSource: await fetchShader("./shaders/mandelbrot.fs")
+        fsSource: await fetchShader("./shaders/mandelbrot_ds.fs")
     }
 };
 
