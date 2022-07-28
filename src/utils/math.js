@@ -18,7 +18,7 @@ export class Matrix3 {
         this.a33 = a33;
     }
 
-    mulVector2({ x, y}) {
+    mulVector2({ x, y }) {
         return new Vector2(
             x * this.a11 + y * this.a12 + this.a13,
             x * this.a21 + y * this.a22 + this.a23,
