@@ -1,3 +1,3 @@
-import { Mandelbrot } from "./mandelbrot.js";
+import Mandelbrot from "./Mandelbrot.js";
 
 new Mandelbrot(document.querySelector("#mandelbrot"));

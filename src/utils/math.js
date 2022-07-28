@@ -88,7 +88,8 @@ export class Rect {
     /**
      * Returns an affine transformation that transforms each point within rect1 to the corresponding
      * point in rect2.
-     * @param {Rect} rect
+     * @param {Rect} rect1
+     * @param {Rect} rect2
      * @returns {Array} A column-major 3x3 matrix
      */
     static transformation(rect1, rect2) {
@@ -119,6 +120,21 @@ export class Rect {
             (this.y - y) * factor + y,
             this.width * factor,
             this.height * factor
+        );
+    }
+
+    /**
+     * Translates the Rect
+     * @param {Number} dx - the translation along the x-axis
+     * @param {Number} dy - the translation along the y-axis
+     * @returns {Rect}
+     */
+    translate(dx, dy) {
+        return new Rect(
+            this.x + dx,
+            this.y + dy,
+            this.width,
+            this.height,
         );
     }
 

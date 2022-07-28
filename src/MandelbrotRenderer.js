@@ -1,8 +1,8 @@
 import shaders, { initShaderProgram } from "./gl/shaders.js";
-import palettes from "./palettes.js";
 import { Rect } from "./utils/math.js";
+import palettes from "./utils/palettes.js";
 
-class MandelbrotRenderer {
+export default class MandelbrotRenderer {
     #gl;
     #programInfo;
     #program;
@@ -39,8 +39,8 @@ class MandelbrotRenderer {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
             -1, -1,
             -1,  1,
-             1, -1,
-             1,  1
+            1, -1,
+            1,  1
         ]), gl.STATIC_DRAW);
 
         // Set up vertex attribute
@@ -127,66 +127,5 @@ class MandelbrotRenderer {
     get viewRect() {
         const { x, y, width, height } = this.#viewRect;
         return new Rect(x, y, width, height);
-    }
-}
-
-export class Mandelbrot {
-    #renderer;
-
-    constructor(canvas) {
-        this.#renderer = new MandelbrotRenderer(canvas);
-        this.canvas = canvas;
-
-        this.#setupEventListeners();
-        this.#handleResize();
-        this.#renderer.render();
-    }
-
-    #setupEventListeners() {
-        window.addEventListener("resize", () => {
-            this.#handleResize();
-            this.#renderer.render();
-        });
-
-        this.canvas.addEventListener("wheel", e => {
-            this.#handleScroll({
-                x: e.offsetX,
-                y: e.offsetY,
-                amount: e.deltaY
-            });
-        });
-    }
-
-    get #clientRect() {
-        return new Rect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
-    }
-
-    get #canvasRect() {
-        return new Rect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
-    set #canvasRect(rect) {
-        this.canvas.width = rect.width;
-        this.canvas.height = rect.height;
-    }
-
-    #handleResize() {
-        const clientRect = this.#clientRect;
-        if (this.#canvasRect.equals(clientRect)) return;
-
-        this.#canvasRect = clientRect;
-        this.#renderer.setGlViewport(0, 0, clientRect.width, clientRect.height);
-    }
-
-    #handleScroll({ x, y, amount }) {
-        const viewRect = this.#renderer.viewRect;
-
-        const a = x * (viewRect.width / this.canvas.clientWidth) + viewRect.x;
-        const b = (viewRect.height - y * (viewRect.height / this.canvas.clientHeight)) + viewRect.y;
-        const scale = 1 + (amount / 400);
-
-        const newViewRect = viewRect.scale(scale, a, b);
-        this.#renderer.viewRect = newViewRect;
-        this.#renderer.render();
     }
 }
