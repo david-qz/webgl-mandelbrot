@@ -3,12 +3,13 @@ import { Rect } from "./utils/math.js";
 import palettes from "./utils/palettes.js";
 
 export default class MandelbrotRenderer {
+    static ndcRect = new Rect(-1, -1, 2, 2);
+
     #gl;
     #programInfo;
     #program;
     #vao;
     #texture;
-    #ndcRect;
     #viewRect;
     #viewMatrix;
 
@@ -22,7 +23,6 @@ export default class MandelbrotRenderer {
         this.#programInfo = initShaderProgram(this.#gl, shaders.mandelbrot);
         this.#program = this.#programInfo.program;
 
-        this.#ndcRect = new Rect(-1.0, -1.0, 2.0, 2.0);
         this.viewRect = new Rect(-2.0, -1.25, 2.75, 2.5);
 
         this.#init();
@@ -120,7 +120,7 @@ export default class MandelbrotRenderer {
 
     set viewRect(rect) {
         this.#viewRect = new Rect(rect.x, rect.y, rect.width, rect.height);
-        this.#viewMatrix = Rect.transformation(this.#ndcRect, rect);
+        this.#viewMatrix = Rect.transformation(MandelbrotRenderer.ndcRect, rect);
         this.#updateViewMatUniform();
     }
 
