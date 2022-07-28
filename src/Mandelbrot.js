@@ -83,7 +83,13 @@ export default class Mandelbrot {
 
     #handlePointerMove(dx, dy) {
         if (this.#pointerDown) {
-            console.log(`dragged ${dx} ${dy}`);
+            const viewRect = this.#renderer.viewRect;
+
+            const da = -1 * dx * viewRect.width / this.canvas.clientWidth;
+            const db = dy * viewRect.height / this.canvas.clientHeight;
+
+            this.#renderer.viewRect = viewRect.translate(da, db);
+            this.#renderer.render();
         }
     }
 }
