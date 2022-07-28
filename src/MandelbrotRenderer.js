@@ -82,7 +82,7 @@ export default class MandelbrotRenderer {
         // View matrix uniform
         gl.useProgram(this.#program);
         const viewMatLoc = this.#programInfo.uniforms["view_mat"].location;
-        gl.uniformMatrix3fv(viewMatLoc, false, this.#viewMatrix);
+        gl.uniformMatrix3fv(viewMatLoc, true, this.#viewMatrix.toArray());
         gl.useProgram(null);
     }
 

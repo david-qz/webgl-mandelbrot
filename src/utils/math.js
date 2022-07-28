@@ -1,22 +1,47 @@
-export class Matrix2 {
+/**
+ * A 3x3 Matrix. Currently, this only used as an affine transformation for Vector2.
+ */
+export class Matrix3 {
     constructor(
-        a11, a12,
-        a21, a22
+        a11, a12, a13,
+        a21, a22, a23,
+        a31, a32, a33,
     ) {
         this.a11 = a11;
         this.a12 = a12;
+        this.a13 = a13;
         this.a21 = a21;
         this.a22 = a22;
+        this.a23 = a23;
+        this.a31 = a31;
+        this.a32 = a32;
+        this.a33 = a33;
     }
 
-    mulVector({ x, y }) {
+    mulVector2({ x, y}) {
         return new Vector2(
-            x * this.a11 + y * this.a12,
-            x * this.a21 + y * this.a22,
+            x * this.a11 + y * this.a12 + this.a13,
+            x * this.a21 + y * this.a22 + this.a23,
         );
+    }
+
+    toArray() {
+        // return [
+        //     this.a11, this.a21, this.a31,
+        //     this.a12, this.a22, this.a32,
+        //     this.a13, this.a23, this.a33
+        // ];
+        return [
+            this.a11, this.a12, this.a13,
+            this.a21, this.a22, this.a23,
+            this.a31, this.a32, this.a33
+        ];
     }
 }
 
+/**
+ * A 2 component vector.
+ */
 export class Vector2 {
     constructor(x, y) {
         this.x = x;
@@ -38,44 +63,9 @@ export class Vector2 {
     }
 }
 
-export class Complex {
-    constructor(a, b) {
-        this.a = a;
-        this.b = b;
-    }
-
-    add(v) {
-        return new Complex(
-            this.a + v.a,
-            this.b + v.b
-        );
-    }
-
-    sub(v) {
-        return new Complex(
-            this.a - v.a,
-            this.b - v.b
-        );
-    }
-
-    mul(c) {
-        return new Complex(
-            this.a * c.a - this.b * c.b,
-            this.a * c.b + this.b * c.a
-        );
-    }
-
-    mag() {
-        return Math.sqrt(this.a * this.a + this.b * this.b);
-    }
-
-    magSquared() {
-        return this.a * this.a + this.b * this.b;
-    }
-}
-
 /**
- * Represents a rectangle with one corner at (x,y). Which corner (x,y) represents is arbitrary.
+ * Represents a rectangle with one corner at (x,y). Which corner (x,y) represents is arbitrary, but should be kept
+ * consistent between usages of the class that interact through class methods.
 */
 export class Rect {
     constructor(x, y, width, height) {
@@ -90,17 +80,17 @@ export class Rect {
      * point in rect2.
      * @param {Rect} rect1
      * @param {Rect} rect2
-     * @returns {Array} A column-major 3x3 matrix
+     * @returns {Matrix3} A column-major 3x3 matrix
      */
     static transformation(rect1, rect2) {
         const { x: x1, y: y1, width: w1, height: h1 } = rect1;
         const { x: x2, y: y2, width: w2, height: h2 } = rect2;
 
-        return [
-            (w2 / w1),           0,                   0,
-            0,                   (h2 / h1),           0,
-            (x2 - w2 * x1 / w1), (y2 - h2 * y1 / h1), 1
-        ];
+        return new Matrix3(
+            (w2 / w1), 0, (x2 - w2 * x1 / w1),
+            0, (h2 / h1), (y2 - h2 * y1 / h1),
+            0, 0, 1
+        );
     }
 
     /**
